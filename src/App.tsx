@@ -18,7 +18,7 @@ import Messages from "./pages/reception/Messages";
 import Requests from "./pages/reception/Requests";
 import SendNotifications from "./pages/reception/SendNotifications";
 import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminRoom from "./pages/admin/adminRoom";
+import AdminRoom from "./pages/admin/AdminRoom";
 import AdminServices from "./pages/admin/AdminServices";
 import NotFound from "./pages/NotFound";
 
