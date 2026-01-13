@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, send_from_directory # Agregamos send_from_directory
+from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
 import os
 from dotenv import load_dotenv
@@ -14,25 +14,29 @@ from routes.unified_auth_routes import unified_auth_bp
 
 load_dotenv()
 
-# Configuramos Flask para que busque el front en la carpeta 'dist' que está un nivel arriba
+# CONFIGURACIÓN DEL FRONTEND:
+# 'static_folder' apunta a '../dist' porque este archivo vive en 'backend/'
+# y el build de Vite genera 'dist/' en la raíz del proyecto.
 app = Flask(__name__, static_folder='../dist', static_url_path='/')
 CORS(app)
 
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-key-123')
 
-# --- RUTAS PARA SERVIR EL FRONTEND ---
+# --- RUTAS PARA SERVIR EL FRONTEND (SPA) ---
+
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
-    # Si el archivo existe en dist (css, js, imagenes), lo sirve
+    # Intentamos encontrar el archivo físico en la carpeta dist (js, css, png, etc.)
     if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
         return send_from_directory(app.static_folder, path)
     else:
-        # Si no existe o es la raíz, manda el index.html de React
+        # Si la ruta no es un archivo (es una ruta de React como /login),
+        # servimos el index.html para que el frontend maneje el ruteo.
         return send_from_directory(app.static_folder, 'index.html')
-# -------------------------------------
 
-# Register blueprints
+# --- REGISTRO DE BLUEPRINTS (API) ---
+
 app.register_blueprint(unified_auth_bp, url_prefix='/api/auth')
 app.register_blueprint(auth_bp, url_prefix='/api/guest')
 app.register_blueprint(service_bp, url_prefix='/api/guest')
@@ -41,11 +45,17 @@ app.register_blueprint(notification_bp, url_prefix='/api/guest')
 app.register_blueprint(catalog_bp, url_prefix='/api/guest')
 app.register_blueprint(staff_bp, url_prefix='/api')
 
-@app.route('/api/health', methods=['GET']) # Cambié a /api/health para no chocar
+# --- HEALTH CHECK ---
+
+@app.route('/api/health', methods=['GET'])
 def health_check():
-    return jsonify({"status": "healthy", "service": "hotel-robles-backend"}), 200
+    return jsonify({
+        "status": "healthy", 
+        "service": "hotel-robles-backend",
+        "environment": "production"
+    }), 200
 
 if __name__ == '__main__':
-    # Usamos el puerto de Render si existe, si no, el 5000
+    # Render usa la variable de entorno PORT, si no existe usamos el 5000
     port = int(os.environ.get("PORT", 5000))
-    app.run(debug=True, host='0.0.0.0', port=port)
+    app.run(debug=False, host='0.0.0.0', port=port)
